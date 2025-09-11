@@ -7,6 +7,7 @@ import StockCard from "@/components/StockCard";
 import StockTable from "@/components/StockTable";
 import StockChart from "@/components/StockChart";
 import TickerInput from "@/components/TickerInput";
+import StockChatbot from "@/components/StockChatbot";
 import { useStockData } from "@/hooks/useStockData";
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
   } = useStockData();
 
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
+  const [isChatbotVisible, setIsChatbotVisible] = useState(false);
 
   const gainers = stockData.filter(stock => stock.direction === 'up').length;
   const losers = stockData.filter(stock => stock.direction === 'down').length;
@@ -178,6 +180,12 @@ const Index = () => {
           </div>
         </CardContent>
       </Card>
+
+      <StockChatbot 
+        stockData={stockData}
+        isVisible={isChatbotVisible}
+        onToggle={() => setIsChatbotVisible(!isChatbotVisible)}
+      />
     </div>
   );
 };

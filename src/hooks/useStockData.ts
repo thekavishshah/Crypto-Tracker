@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { StockMovement } from '@/types/stock';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Mock data for demonstration
 const generateMockStockData = (symbols: string[]): StockMovement[] => {
@@ -31,20 +32,28 @@ export const useStockData = () => {
   const fetchStockData = useCallback(async (symbols: string[]) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, this would call your backend API
-      // const response = await fetch('/api/movements?symbols=' + symbols.join(','));
-      // const data = await response.json();
-      
-      const mockData = generateMockStockData(symbols);
-      setStockData(mockData);
-      
+      // Call our Supabase Edge Function to get real stock data
+      const { data, error } = await supabase.functions.invoke('fetch-stock-data', {
+        body: { symbols },
+      });
+
+      if (error) throw error;
+
+      // Add unique IDs to the stock data
+      const stockDataWithIds = data.stockData.map((stock: any, index: number) => ({
+        ...stock,
+        id: `${stock.symbol}-${Date.now()}-${index}`,
+      }));
+
+      setStockData(stockDataWithIds);
       toast.success(`Updated data for ${symbols.length} stocks`);
     } catch (error) {
       console.error('Error fetching stock data:', error);
       toast.error('Failed to fetch stock data');
+      
+      // Fallback to mock data if the API fails
+      const mockData = generateMockStockData(symbols);
+      setStockData(mockData);
     } finally {
       setIsLoading(false);
     }
