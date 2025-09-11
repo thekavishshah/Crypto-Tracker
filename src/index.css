@@ -8,35 +8,52 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 218 23% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 23% 11%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 23% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 220 23% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 23% 15%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 23% 15%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 23% 15%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 23% 15%;
+    --input: 220 23% 15%;
+    --ring: 142 76% 36%;
 
     --radius: 0.5rem;
+
+    /* Financial colors */
+    --gain: 142 76% 36%;
+    --gain-foreground: 220 23% 8%;
+    --gain-muted: 142 76% 36% / 0.2;
+    
+    --loss: 0 84% 60%;
+    --loss-foreground: 210 40% 98%;
+    --loss-muted: 0 84% 60% / 0.2;
+    
+    --neutral: 215 20.2% 65.1%;
+    --neutral-foreground: 210 40% 98%;
+
+    /* Gradients */
+    --gradient-gain: linear-gradient(135deg, hsl(var(--gain)), hsl(142 76% 45%));
+    --gradient-loss: linear-gradient(135deg, hsl(var(--loss)), hsl(0 84% 70%));
+    --gradient-background: linear-gradient(135deg, hsl(var(--background)), hsl(220 23% 10%));
 
     --sidebar-background: 0 0% 98%;
 
