@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Historical Data Fetch</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Test Historical Data Fetch</h1>
+  <button onclick="testFetch()">Test Fetch AAPL (90 days)</button>
+  <button onclick="testFetchMultiple()">Test Fetch Multiple Symbols</button>
+  <button onclick="checkDatabase()">Check Database</button>
+  <pre id="output"></pre>
+
+  <script>
+    const SUPABASE_URL = 'https://kiefqxdeaikclwkiluop.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZWZxeGRlYWlrY2x3a2lsdW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzE2OTUsImV4cCI6MjA3MzE0NzY5NX0.LrqjynnIwvRbDiT4tnfu2oVNIPtDG48hv6aKNcrrDJ8';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function log(message) {
+      const output = document.getElementById('output');
+      output.textContent += message + '\n';
+      console.log(message);
+    }
+
+    async function testFetch() {
+      document.getElementById('output').textContent = '';
+      log('Testing fetch-historical-data for AAPL...\n');
+
+      try {
+        const startTime = Date.now();
+        log('Invoking edge function...');
+
+        const { data, error } = await supabase.functions.invoke('fetch-historical-data', {
+          body: { symbols: ['AAPL'], days: 90, saveToDb: true }
+        });
+
+        const elapsed = Date.now() - startTime;
+        log(`Response received in ${elapsed}ms\n`);
+
+        if (error) {
+          log('ERROR from edge function:');
+          log(JSON.stringify(error, null, 2));
+          return;
+        }
+
+        log('SUCCESS! Data received:');
+        log(`- Count: ${data.count}`);
+        log(`- Symbols: ${data.symbols?.join(', ')}`);
+        log(`- Days: ${data.days}`);
+        log(`- Sample data (first 3 records):`);
+        log(JSON.stringify(data.historicalData?.slice(0, 3), null, 2));
+
+        // Check if data was saved to DB
+        log('\nChecking database...');
+        const { data: dbData, error: dbError } = await supabase
+          .from('historical_prices')
+          .select('*')
+          .eq('symbol', 'AAPL')
+          .order('date', { ascending: false })
+          .limit(5);
+
+        if (dbError) {
+          log('Database check error: ' + dbError.message);
+        } else {
+          log(`Found ${dbData?.length || 0} records in database for AAPL`);
+          log(JSON.stringify(dbData, null, 2));
+        }
+
+      } catch (err) {
+        log('EXCEPTION:');
+        log(err.message);
+        log(err.stack);
+      }
+    }
+
+    async function testFetchMultiple() {
+      document.getElementById('output').textContent = '';
+      log('Testing fetch-historical-data for multiple symbols...\n');
+
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-historical-data', {
+          body: { symbols: ['AAPL', 'GOOGL', 'TSLA', 'MSFT'], days: 90, saveToDb: true }
+        });
+
+        if (error) {
+          log('ERROR: ' + JSON.stringify(error, null, 2));
+          return;
+        }
+
+        log('SUCCESS!');
+        log(`Total records: ${data.count}`);
+        log(`Symbols: ${data.symbols?.join(', ')}`);
+
+      } catch (err) {
+        log('EXCEPTION: ' + err.message);
+      }
+    }
+
+    async function checkDatabase() {
+      document.getElementById('output').textContent = '';
+      log('Checking historical_prices table...\n');
+
+      try {
+        // Get count per symbol
+        const { data, error } = await supabase
+          .from('historical_prices')
+          .select('symbol, date')
+          .order('symbol')
+          .order('date', { ascending: false });
+
+        if (error) {
+          log('ERROR: ' + error.message);
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          log('Database is EMPTY - no historical prices found');
+          return;
+        }
+
+        // Count by symbol
+        const counts = {};
+        data.forEach(row => {
+          counts[row.symbol] = (counts[row.symbol] || 0) + 1;
+        });
+
+        log('Records in database:');
+        Object.entries(counts).forEach(([symbol, count]) => {
+          log(`  ${symbol}: ${count} days`);
+        });
+
+        log('\nLatest dates:');
+        const latestBySymbol = {};
+        data.forEach(row => {
+          if (!latestBySymbol[row.symbol]) {
+            latestBySymbol[row.symbol] = row.date;
+          }
+        });
+        Object.entries(latestBySymbol).forEach(([symbol, date]) => {
+          log(`  ${symbol}: ${date}`);
+        });
+
+      } catch (err) {
+        log('EXCEPTION: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

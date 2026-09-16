@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,9 @@ import StockTable from "@/components/StockTable";
 import StockChart from "@/components/StockChart";
 import TickerInput from "@/components/TickerInput";
 import StockChatbot from "@/components/StockChatbot";
+import PredictionPanel from "@/components/PredictionPanel";
 import { useStockData } from "@/hooks/useStockData";
+import { usePredictions } from "@/hooks/usePredictions";
 
 const Index = () => {
   const {
@@ -20,8 +22,26 @@ const Index = () => {
     refreshData,
   } = useStockData();
 
+  const {
+    predictions,
+    accuracy,
+    isLoading: isPredictionsLoading,
+    generatePredictions,
+    runBacktesting,
+    fetchPredictions,
+    fetchAccuracy,
+  } = usePredictions();
+
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [isChatbotVisible, setIsChatbotVisible] = useState(false);
+
+  // Fetch predictions and accuracy on mount
+  useEffect(() => {
+    if (watchlist.length > 0) {
+      fetchPredictions(watchlist);
+      fetchAccuracy();
+    }
+  }, [watchlist]);
 
   const gainers = stockData.filter(stock => stock.direction === 'up').length;
   const losers = stockData.filter(stock => stock.direction === 'down').length;
@@ -102,10 +122,11 @@ const Index = () => {
 
       {/* Main Content */}
       <Tabs defaultValue="table" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-          <TabsTrigger value="table">Table View</TabsTrigger>
-          <TabsTrigger value="cards">Card View</TabsTrigger>
-          <TabsTrigger value="chart">Chart View</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+          <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsTrigger value="cards">Cards</TabsTrigger>
+          <TabsTrigger value="chart">Chart</TabsTrigger>
+          <TabsTrigger value="predictions">Predictions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="table" className="space-y-4">
@@ -161,6 +182,17 @@ const Index = () => {
               <p className="text-muted-foreground">Add some tickers to your watchlist to see charts</p>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="predictions" className="space-y-4">
+          <PredictionPanel
+            predictions={predictions}
+            accuracy={accuracy}
+            isLoading={isPredictionsLoading}
+            onGeneratePredictions={generatePredictions}
+            onRunBacktest={runBacktesting}
+            watchlist={watchlist}
+          />
         </TabsContent>
       </Tabs>
 

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Linear Regression</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+</head>
+<body>
+  <h1>Test Linear Regression Model</h1>
+  <button onclick="testLinearRegression()">Test Linear Regression on AAPL Data</button>
+  <pre id="output"></pre>
+
+  <script>
+    const SUPABASE_URL = 'https://kiefqxdeaikclwkiluop.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZWZxeGRlYWlrY2x3a2lsdW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzE2OTUsImV4cCI6MjA3MzE0NzY5NX0.LrqjynnIwvRbDiT4tnfu2oVNIPtDG48hv6aKNcrrDJ8';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function log(message) {
+      const output = document.getElementById('output');
+      output.textContent += message + '\n';
+      console.log(message);
+    }
+
+    async function testLinearRegression() {
+      document.getElementById('output').textContent = '';
+      log('Testing Linear Regression Model...\n');
+
+      try {
+        // Fetch historical data for AAPL
+        log('Fetching AAPL historical data...');
+        const { data: historicalData, error } = await supabase
+          .from('historical_prices')
+          .select('*')
+          .eq('symbol', 'AAPL')
+          .order('date', { ascending: true });
+
+        if (error) throw error;
+
+        log(`Found ${historicalData.length} days of data\n`);
+
+        // Test linear regression prediction
+        log('Running linear regression on last 30 days...');
+
+        const last30Days = historicalData.slice(-30);
+        const regressionData = last30Days.map((item, index) => [index, item.close]);
+
+        log(`Regression data points: ${regressionData.length}`);
+        log(`Sample: [0, ${regressionData[0][1]}] to [29, ${regressionData[29][1]}]\n`);
+
+        // Run regression
+        const result = regression.linear(regressionData);
+
+        log('Regression result:');
+        log(`  Equation: y = ${result.equation[0].toFixed(4)}x + ${result.equation[1].toFixed(2)}`);
+        log(`  R²: ${result.r2.toFixed(4)}`);
+        log(`  Slope: ${result.equation[0].toFixed(4)}\n`);
+
+        // Predict next day (day 30)
+        const predictedPrice = result.predict(30)[1];
+        const currentPrice = last30Days[last30Days.length - 1].close;
+
+        log('Prediction:');
+        log(`  Current price: $${currentPrice.toFixed(2)}`);
+        log(`  Predicted price: $${predictedPrice.toFixed(2)}`);
+        log(`  Change: ${((predictedPrice - currentPrice) / currentPrice * 100).toFixed(2)}%\n`);
+
+        log('✅ Linear Regression works! Model is functional.');
+
+      } catch (err) {
+        log('❌ ERROR:');
+        log(err.message);
+        log(err.stack);
+      }
+    }
+  </script>
+</body>
+</html>
